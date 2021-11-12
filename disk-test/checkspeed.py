@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/bin/python3
+# -*- coding: utf-8 -*-
+
 '''
 MonkeyTest -- test your hard drive read-write speed in Python
 A simplistic script to show that such system programming
@@ -13,8 +15,8 @@ and deleted, so the script doesn't waste your drive
 Runs on both Python3 and 2, despite that I prefer 3
 Has been tested on 3.5 and 2.7 under ArchLinux
 Has been tested on 3.5.2 under Ubuntu Xenial
+# https://github.com/thodnev/MonkeyTest
 '''
-from __future__ import division, print_function  # for compatability with py2
 
 import os, sys
 from random import shuffle
@@ -153,8 +155,9 @@ class Benchmark:
         return took
 
     def print_result(self):
-        result = ('\n\nWritten {} MB in {:.4f} s\nWrite speed is  {:.2f} MB/s'
+        result = ('\n\nFull path of file: {}\n\nWritten {} MB in {:.4f} s\nWrite speed is  {:.2f} MB/s'
                   '\n  max: {max:.2f}, min: {min:.2f}\n'.format(
+            os.path.abspath(self.file),
             self.write_mb, sum(self.write_results), self.write_mb / sum(self.write_results),
             max=self.write_block_kb / (1024 * min(self.write_results)),
             min=self.write_block_kb / (1024 * max(self.write_results))))
@@ -170,6 +173,7 @@ class Benchmark:
 
     def get_json_result(self,output_file):
         results_json = {}
+        results_json["Full path of test file"] = os.path.abspath(self.file) 
         results_json["Written MB"] = self.write_mb
         results_json["Write time (sec)"] = round(sum(self.write_results),2)
         results_json["Write speed in MB/s"] = round(self.write_mb / sum(self.write_results),2)
