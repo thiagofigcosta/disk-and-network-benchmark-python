@@ -98,27 +98,29 @@ class Benchmark:
         of blocks_count, each at size of block_size bytes to disk.
         Function returns a list of write times in sec of each block.
         '''
-        f = os.open(self.file, os.O_CREAT | os.O_WRONLY, 0o777)  # low-level I/O
-
-        took = []
-        for i in range(blocks_count):
+        try:
+            f = os.open(self.file, os.O_CREAT | os.O_WRONLY, 0o777)  # low-level I/O
+            took = []
+            for i in range(blocks_count):
+                if show_progress:
+                    # dirty trick to actually print progress on each iteration
+                    sys.stdout.write('\rWriting: {:.2f} %'.format((i + 1) * 100 / blocks_count))
+                    sys.stdout.flush()
+                buff = os.urandom(block_size)
+                start = time_time()
+                os.write(f, buff)
+                os.fsync(f)  # force write to disk
+                t = time_time() - start
+                took.append(t)
+            os.close(f)
             if show_progress:
-                # dirty trick to actually print progress on each iteration
-                sys.stdout.write('\rWriting: {:.2f} %'.format((i + 1) * 100 / blocks_count))
+                sys.stdout.write('\r{}'.format(' '*Benchmark.LINE_BUFFER_SIZE)) # clear the line
                 sys.stdout.flush()
-            buff = os.urandom(block_size)
-            start = time_time()
-            os.write(f, buff)
-            os.fsync(f)  # force write to disk
-            t = time_time() - start
-            took.append(t)
-
-        os.close(f)
-        if show_progress:
-            sys.stdout.write('\r{}'.format(' '*Benchmark.LINE_BUFFER_SIZE)) # clear the line
-            sys.stdout.flush()
-            sys.stdout.write('\r')
-        return took
+                sys.stdout.write('\r')
+            return took
+        except Exception as e:
+            self.tear_down()
+            raise e
 
     def read_test(self, block_size, blocks_count, show_progress=True):
         '''
@@ -127,29 +129,32 @@ class Benchmark:
         bytes until the End Of File reached.
         Returns a list of read times in sec of each block.
         '''
-        f = os.open(self.file, os.O_RDONLY, 0o777)  # low-level I/O
-        # generate random read positions
-        offsets = list(range(0, blocks_count * block_size, block_size))
-        shuffle(offsets)
-
-        took = []
-        for i, offset in enumerate(offsets, 1):
-            if show_progress and i % int(self.write_block_kb * 1024 / self.read_block_b) == 0:
-                # read is faster than write, so try to equalize print period
-                sys.stdout.write('\rReading: {:.2f} %'.format((i + 1) * 100 / blocks_count))
+        try:
+            f = os.open(self.file, os.O_RDONLY, 0o777)  # low-level I/O
+            # generate random read positions
+            offsets = list(range(0, blocks_count * block_size, block_size))
+            shuffle(offsets)
+            took = []
+            for i, offset in enumerate(offsets, 1):
+                if show_progress and i % int(self.write_block_kb * 1024 / self.read_block_b) == 0:
+                    # read is faster than write, so try to equalize print period
+                    sys.stdout.write('\rReading: {:.2f} %'.format((i + 1) * 100 / blocks_count))
+                    sys.stdout.flush()
+                start = time_time()
+                os.lseek(f, offset, os.SEEK_SET)  # set position
+                buff = os.read(f, block_size)  # read from position
+                t = time_time() - start
+                if not buff: break  # if EOF reached
+                took.append(t)
+            os.close(f)
+            if show_progress:
+                sys.stdout.write('\r{}'.format(' '*Benchmark.LINE_BUFFER_SIZE)) # clear the line
                 sys.stdout.flush()
-            start = time_time()
-            os.lseek(f, offset, os.SEEK_SET)  # set position
-            buff = os.read(f, block_size)  # read from position
-            t = time_time() - start
-            if not buff: break  # if EOF reached
-            took.append(t)
-        os.close(f)
-        if show_progress:
-            sys.stdout.write('\r{}'.format(' '*Benchmark.LINE_BUFFER_SIZE)) # clear the line
-            sys.stdout.flush()
-            sys.stdout.write('\r')
-        return took
+                sys.stdout.write('\r')
+            return took
+        except Exception as e:
+            self.tear_down()
+            raise e
 
     def print_result(self):
         results=self.get_results()
