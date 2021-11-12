@@ -78,6 +78,7 @@ def parseNumericDict(num_dict):
 
 class Benchmark:
 
+    SHOW_PROGRESS=True
     DEFAULT_FILE_ON_TMP=False
     LINE_BUFFER_SIZE=20
     ROUND_PRECISION=5
@@ -92,7 +93,7 @@ class Benchmark:
         self.write_results = self.write_test( 1024 * self.write_block_kb, wr_blocks)
         self.read_results = self.read_test(self.read_block_b, rd_blocks)
 
-    def write_test(self, block_size, blocks_count, show_progress=True):
+    def write_test(self, block_size, blocks_count, show_progress=SHOW_PROGRESS):
         '''
         Tests write speed by writing random blocks, at total quantity
         of blocks_count, each at size of block_size bytes to disk.
@@ -110,8 +111,7 @@ class Benchmark:
                 start = time_time()
                 os.write(f, buff)
                 os.fsync(f)  # force write to disk
-                t = time_time() - start
-                took.append(t)
+                took.append(time_time()-start)
             os.close(f)
             if show_progress:
                 sys.stdout.write('\r{}'.format(' '*Benchmark.LINE_BUFFER_SIZE)) # clear the line
@@ -122,7 +122,7 @@ class Benchmark:
             self.tear_down()
             raise e
 
-    def read_test(self, block_size, blocks_count, show_progress=True):
+    def read_test(self, block_size, blocks_count, show_progress=SHOW_PROGRESS):
         '''
         Performs read speed test by reading random offset blocks from
         file, at maximum of blocks_count, each at size of block_size
