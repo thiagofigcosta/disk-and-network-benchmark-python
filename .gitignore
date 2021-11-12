@@ -1,0 +1,4 @@
+.disk_performance_test.tmp
+*.pyc
+disk-test/*.pyc
+network-test/*.pyc
