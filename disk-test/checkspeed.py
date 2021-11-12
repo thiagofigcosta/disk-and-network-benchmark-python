@@ -83,22 +83,23 @@ class Benchmark:
     LINE_BUFFER_SIZE=20
     ROUND_PRECISION=5
 
-    def __init__(self, file,write_mb, write_block_kb, read_block_b):
+    def __init__(self, file,write_mb, write_block_b, read_block_b):
         self.file = file
         self.write_mb = write_mb
-        self.write_block_kb = write_block_kb
+        self.write_block_b = write_block_b
         self.read_block_b = read_block_b
-        wr_blocks = int(self.write_mb * 1024 / self.write_block_kb)
+        wr_blocks = int(self.write_mb * 1024 * 1024 / self.write_block_b)
         rd_blocks = int(self.write_mb * 1024 * 1024 / self.read_block_b)
-        self.write_results = self.write_test( 1024 * self.write_block_kb, wr_blocks)
-        self.read_results = self.read_test(self.read_block_b, rd_blocks)
+        self.write_results = self.write_test(wr_blocks)
+        self.read_results = self.read_test(rd_blocks)
 
-    def write_test(self, block_size, blocks_count, show_progress=SHOW_PROGRESS):
+    def write_test(self, blocks_count, show_progress=SHOW_PROGRESS):
         '''
         Tests write speed by writing random blocks, at total quantity
         of blocks_count, each at size of block_size bytes to disk.
         Function returns a list of write times in sec of each block.
         '''
+        block_size=self.write_block_b
         try:
             f = os.open(self.file, os.O_CREAT | os.O_WRONLY, 0o777)  # low-level I/O
             took = []
@@ -122,13 +123,14 @@ class Benchmark:
             self.tear_down()
             raise e
 
-    def read_test(self, block_size, blocks_count, show_progress=SHOW_PROGRESS):
+    def read_test(self, blocks_count, show_progress=SHOW_PROGRESS):
         '''
         Performs read speed test by reading random offset blocks from
         file, at maximum of blocks_count, each at size of block_size
         bytes until the End Of File reached.
         Returns a list of read times in sec of each block.
         '''
+        block_size=self.read_block_b
         try:
             f = os.open(self.file, os.O_RDONLY, 0o777)  # low-level I/O
             # generate random read positions
@@ -136,7 +138,7 @@ class Benchmark:
             shuffle(offsets)
             took = []
             for i, offset in enumerate(offsets, 1):
-                if show_progress and i % int(self.write_block_kb * 1024 / self.read_block_b) == 0:
+                if show_progress and i % int(self.write_block_b / self.read_block_b) == 0:
                     # read is faster than write, so try to equalize print period
                     sys.stdout.write('\rReading: {:.2f} %'.format((i + 1) * 100 / blocks_count))
                     sys.stdout.flush()
@@ -174,9 +176,9 @@ class Benchmark:
         results["Test file size"] = bytesToHumanReadable(self.write_mb*1024*1024)
         results["Write time"] = '{} s'.format(round(sum(self.write_results),Benchmark.ROUND_PRECISION))
         results["Write speed (avg)"] = bytesToHumanReadable(self.write_mb*1024*1024 / sum(self.write_results),'B/s')
-        results["Write speed (max)"] = bytesToHumanReadable(self.write_block_kb*1024 / min(self.write_results),'B/s')
-        results["Write speed (min)"] = bytesToHumanReadable(self.write_block_kb*1024 / max(self.write_results),'B/s')
-        results["Write block size"] = bytesToHumanReadable(self.write_block_kb)
+        results["Write speed (max)"] = bytesToHumanReadable(self.write_block_b / min(self.write_results),'B/s')
+        results["Write speed (min)"] = bytesToHumanReadable(self.write_block_b / max(self.write_results),'B/s')
+        results["Write block size"] = bytesToHumanReadable(self.write_block_b)
         results["Read blocks"] = len(self.read_results)
         results["Read time"] = '{} s'.format(round(sum(self.read_results),Benchmark.ROUND_PRECISION))
         results["Read speed (avg)"] = bytesToHumanReadable(self.write_mb*1024*1024 / sum(self.read_results),'B/s')
@@ -204,7 +206,7 @@ class Benchmark:
         parser = argparse.ArgumentParser(description='Arguments', formatter_class = argparse.ArgumentDefaultsHelpFormatter)
         parser.add_argument('-f','--file',required=False,action='store',default=default_test_file,help='The file to read/write to')
         parser.add_argument('-s','--size',required=False,action='store',type=int,default=256,help='Total MB to write')
-        parser.add_argument('-w', '--write-block-size',required=False,action='store',type=int,default=1024,help='The block size for writing in bytes')
+        parser.add_argument('-w', '--write-block-size',required=False,action='store',type=int,default=1048576,help='The block size for writing in bytes')
         parser.add_argument('-r', '--read-block-size',required=False,action='store',type=int,default=512,help='The block size for reading in bytes')
         parser.add_argument('-j', '--json',required=False,action='store',help='Output to json file')
         args=parser.parse_args()
