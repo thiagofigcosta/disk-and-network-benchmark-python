@@ -9,7 +9,7 @@ except ImportError:  # else select highest available resolution counter
     if sys.platform[:3] == 'win':
         from time import clock as time_time
     else:
-        from time import time_time
+        from time import time as time_time
 
 # https://github.com/amjadsde/Speed-Test
 
@@ -90,6 +90,7 @@ def parseNumericDict(num_dict):
 
 class Benchmark:
     SHOW_PROGRESS=True
+    USE_THE_SAME_BUFFER=True
     LINE_BUFFER_SIZE=20
     ROUND_PRECISION=5
 
@@ -111,13 +112,16 @@ class Benchmark:
         t_after_sock_open = time_time()
         s.connect((self.server_address, int(self.server_port)))
         self.ping_connect = time_time()-t_after_sock_open
+        if Benchmark.USE_THE_SAME_BUFFER:
+            buffer = Benchmark.random_bytearray(self.block_size_b)
         took = []
         for c in range(blocks_count):
             if show_progress:
                 # dirty trick to actually print progress on each iteration
                 sys.stdout.write('\rTransfering: {:.2f} %'.format((c + 1) * 100 / blocks_count))
                 sys.stdout.flush()
-            buffer = Benchmark.random_bytearray(self.block_size_b)
+            if not Benchmark.USE_THE_SAME_BUFFER:
+                buffer = Benchmark.random_bytearray(self.block_size_b)
             t_b4_send=time_time()
             s.send(buffer)
             took.append(time_time()-t_b4_send)
@@ -125,8 +129,8 @@ class Benchmark:
             sys.stdout.write('\r{}'.format(' '*Benchmark.LINE_BUFFER_SIZE)) # clear the line
             sys.stdout.flush()
             sys.stdout.write('\r')
+        s.shutdown(socket.SHUT_WR)
         t_b4_sock_close = time_time()
-        s.shutdown(1)
         data = s.recv(self.block_size_b)
         self.ping_disconnect = time_time()-t_b4_sock_close
         return took
@@ -172,11 +176,9 @@ class Benchmark:
 def main():
     args = Benchmark.get_args()
     if args.ip_address is None:
-        # args.ip_address=input("Server IP: ")
-        args.ip_address='127.0.0.1'
+        args.ip_address=input('Server IP: ')
     if args.port is None:
-        # args.port=input("Server port: ")
-        args.port='5000'
+        args.port=input('Server port: ')
 
     benchmark = Benchmark(args.ip_address, args.port, args.size, args.block_size)
 
