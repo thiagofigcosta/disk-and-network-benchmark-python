@@ -175,7 +175,7 @@ class Benchmark:
         parser = argparse.ArgumentParser(description='Arguments', formatter_class = argparse.ArgumentDefaultsHelpFormatter)
         parser.add_argument('-a','--ip-address',required=False,action='store',default=None,help='The server IP address')
         parser.add_argument('-p','--port',required=False,action='store',default=None,help='The server port')
-        parser.add_argument('-s','--size',required=False,action='store',type=int,default=1024,help='Total MB to transfer')
+        parser.add_argument('-s','--size',required=False,action='store',type=int,default=256,help='Total MB to transfer')
         parser.add_argument('-b', '--block-size',required=False,action='store',type=int,default=1048576,help='The block size for transfer in bytes')
         parser.add_argument('-j', '--json',required=False,action='store',help='Output to json file')
         args=parser.parse_args()

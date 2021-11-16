@@ -24,7 +24,13 @@ def server(ip_address,port):
     s.listen(1)
     print ('Server ready on {}:{}...'.format(ip_address,port))
     while True:
-        conn, (client_ip, remoteport) = s.accept()
+        conn=None
+        try:
+            conn, (client_ip, remoteport) = s.accept()
+        except KeyboardInterrupt:
+            if conn:
+                conn.close()
+            break
         while True:
             data = conn.recv(BUFSIZE)
             if not data:
