@@ -14,8 +14,8 @@ if sys.version_info[0]==2 and has_raw_input:
     input=raw_input
 
 
-BUFSIZE = 1048576 # bytes # TODO transfer buffer size on the first message
-# BUFSIZE = 4096 # bytes
+# BUFSIZE = 1048576 # bytes # TODO transfer buffer size on the first message
+BUFSIZE = 4096 # bytes
 DEFAULT_PORT=None
 
 def server(ip_address,port):
