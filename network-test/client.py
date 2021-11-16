@@ -1,6 +1,8 @@
 #!/bin/python3
 # -*- coding: utf-8 -*-
 
+# modified from: https://github.com/amjadsde/Speed-Test
+
 import sys, time, socket, random, argparse, json
 
 try:  # if Python >= 3.3 use new high-res counter
@@ -11,7 +13,13 @@ except ImportError:  # else select highest available resolution counter
     else:
         from time import time as time_time
 
-# https://github.com/amjadsde/Speed-Test
+has_raw_input=True
+try:
+    raw_input
+except NameError:
+    has_raw_input=False
+if sys.version_info[0]==2 and has_raw_input:
+    input=raw_input
 
 
 def secToHumanReadable(sec,suffix='s'):

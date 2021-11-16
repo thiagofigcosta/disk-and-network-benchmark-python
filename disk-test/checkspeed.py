@@ -15,7 +15,7 @@ and deleted, so the script doesn't waste your drive
 Runs on both Python3 and 2, despite that I prefer 3
 Has been tested on 3.5 and 2.7 under ArchLinux
 Has been tested on 3.5.2 under Ubuntu Xenial
-# https://github.com/thodnev/MonkeyTest
+# modified from: https://github.com/thodnev/MonkeyTest
 '''
 
 import os, sys, errno
