@@ -27,17 +27,17 @@ def server(ip_address,port):
         conn=None
         try:
             conn, (client_ip, remoteport) = s.accept()
+            while True:
+                data = conn.recv(BUFSIZE)
+                if not data:
+                    break
+                del data
+            conn.close()
+            print ('Done with', client_ip, 'on port', remoteport)
         except KeyboardInterrupt:
             if conn:
                 conn.close()
             break
-        while True:
-            data = conn.recv(BUFSIZE)
-            if not data:
-                break
-            del data
-        conn.close()
-        print ('Done with', client_ip, 'on port', remoteport)
 
 def get_args():
     parser = argparse.ArgumentParser(description='Arguments', formatter_class = argparse.ArgumentDefaultsHelpFormatter)
